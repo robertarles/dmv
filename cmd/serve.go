@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -42,28 +43,23 @@ func init() {
 	serveCmd.Flags().UintVarP(&httpPort, "port", "p", 80, "Listen on this HTTP Port")
 }
 
+var callerRegister = make(map[string]map[string]string)
+
 func serve() {
-	type callerRecord struct {
-		hostname   string
-		remoteAddr string
-		requestURI string
-	}
 
 	// var registrationList = make([]callerRecord, 1)
-
-	var callerRegister = make(map[string]callerRecord)
 
 	r := mux.NewRouter()
 
 	// add a host registration
 	r.HandleFunc("/register/{hostname}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		caller := callerRecord{}
+		caller := make(map[string]string)
 		response := ""
-		caller.hostname = vars["hostname"]
-		caller.remoteAddr = strings.Split(r.RemoteAddr, ":")[0]
-		caller.requestURI = r.RequestURI
-		callerRegister[caller.hostname] = caller
+		caller["hostname"] = vars["hostname"]
+		caller["remoteAddr"] = strings.Split(r.RemoteAddr, ":")[0]
+		caller["requestURI"] = r.RequestURI
+		callerRegister[caller["hostname"]] = caller
 		//response = fmt.Sprintf("current caller: %s, %s, %s\n", caller.hostname, caller.remoteAddr, caller.requestURI)
 
 		response += fmt.Sprintf("%+v", callerRegister)
@@ -72,9 +68,10 @@ func serve() {
 	}).Methods("GET", "PUT", "POST")
 
 	// remove a host registration
-	r.HandleFunc("/register/{hostname}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/delete/{hostname}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		response := ""
+		fmt.Println(vars["hostname"])
 		delete(callerRegister, vars["hostname"])
 		response += fmt.Sprintf("%+v", callerRegister)
 		fmt.Printf("Test %+v\n", r)
@@ -83,8 +80,12 @@ func serve() {
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Test %+v\n", r)
-		response := fmt.Sprintf("%+v", callerRegister)
-		fmt.Fprintf(w, response)
+		jsonString, err := json.Marshal(callerRegister)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("DEBUG -- jsonString %+v\n", string(jsonString))
+		fmt.Fprintf(w, string(jsonString))
 	}).Methods("GET")
 
 	// fs := http.FileServer(http.Dir("static/"))

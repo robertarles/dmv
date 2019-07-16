@@ -17,6 +17,9 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+
+	"net/http"
 
 	"github.com/spf13/cobra"
 )
@@ -33,19 +36,44 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("delete called")
+		deleteRegistration()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deleteCmd)
 
-	// Here you will define your flags and configuration settings.
+	deleteCmd.Flags().StringVarP(&regName, "name", "n", "", "hostname to register")
+	deleteCmd.MarkFlagRequired("name")
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deleteCmd.PersistentFlags().String("foo", "", "A help for foo")
+	deleteCmd.Flags().StringVarP(&regServer, "server", "s", "", "server hosting registry")
+	deleteCmd.MarkFlagRequired("server")
+}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func deleteRegistration() {
+
+	fmt.Println(regServer)
+	fmt.Println(regName)
+	deleteURL := fmt.Sprintf("http://%s/delete/%s", regServer, regName)
+
+	// Create client
+	client := &http.Client{}
+
+	// Create request
+	req, err := http.NewRequest("DELETE", deleteURL, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Fetch Request
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Printf("post result %s\n", string(body))
 }

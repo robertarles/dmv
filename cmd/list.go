@@ -16,9 +16,11 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -35,7 +37,13 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list called")
-		getRegistry()
+		jsonString, err := getRegistry()
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("%s\n\n", jsonString)
+		os.Exit(0)
 	},
 }
 
@@ -46,14 +54,28 @@ func init() {
 	listCmd.MarkFlagRequired("server")
 }
 
-func getRegistry() {
+func getRegistry() (jsonString string, err error) {
 
 	resp, err := http.Get(fmt.Sprintf("http://%s", regServer))
 	if err != nil {
 		panic(err)
 	}
+
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Printf("%s\n", body)
+	fmt.Printf("DEBUG -- %s\n", body)
+	// the registry (the response) -> {host1:{hostname:"hostname", remote_addr:"123.123.123.123"...etc}, host2:{hostname:"hostname", remote_addr:"123.123.123.234"...etc}}
+	respBody := make(map[string]map[string]string)
+	decoder := json.NewDecoder(resp.Body)
+	decodeErr := decoder.Decode(&respBody)
+	if decodeErr != nil {
+		return "", decodeErr
+	}
+	jsonBytes, marshErr := json.MarshalIndent(respBody, "", "  ")
+	if marshErr != nil {
+		return "", marshErr
+	}
+
+	return string(jsonBytes), nil
 
 }
