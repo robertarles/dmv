@@ -60,10 +60,9 @@ func serve() {
 		caller["remoteAddr"] = strings.Split(r.RemoteAddr, ":")[0]
 		caller["requestURI"] = r.RequestURI
 		callerRegister[caller["hostname"]] = caller
-		//response = fmt.Sprintf("current caller: %s, %s, %s\n", caller.hostname, caller.remoteAddr, caller.requestURI)
 
 		response += fmt.Sprintf("%+v", callerRegister)
-		fmt.Printf("Test %+v\n", r)
+		fmt.Printf("register: %+v\n", caller)
 		fmt.Fprintf(w, response)
 	}).Methods("GET", "PUT", "POST")
 
@@ -71,26 +70,21 @@ func serve() {
 	r.HandleFunc("/delete/{hostname}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		response := ""
-		fmt.Println(vars["hostname"])
 		delete(callerRegister, vars["hostname"])
 		response += fmt.Sprintf("%+v", callerRegister)
-		fmt.Printf("Test %+v\n", r)
+		fmt.Printf("deleted: %+v\n", vars["hostname"])
 		fmt.Fprintf(w, response)
 	}).Methods("DELETE")
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Test %+v\n", r)
-		jsonString, err := json.Marshal(callerRegister)
+		jsonString, err := json.MarshalIndent(callerRegister, "", "  ")
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("DEBUG -- jsonString %+v\n", string(jsonString))
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(jsonString))
 	}).Methods("GET")
 
-	// fs := http.FileServer(http.Dir("static/"))
-	// http.Handle("/static/", http.StripPrefix("/static/", fs))
 	usingPort = fmt.Sprintf(":%d", httpPort)
 	fmt.Printf("starting server on port %s\n", usingPort)
 	http.ListenAndServe(usingPort, r)
