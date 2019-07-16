@@ -30,16 +30,10 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "dmv",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Short: "A basic 'registry' server allowing multiple hosts to record their infomation in a central location. No DB, in memory data only.",
+	Long: `Run 'dmv serve' on the system to act as the DMV registry server.
+Any system may browse to http://[regserver]/register/[name], --OR-- run 'dmv -n [name] -s [regserver]'
+	[regserver] is the system running 'dmv serve' and [name] is the hostname to register`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
