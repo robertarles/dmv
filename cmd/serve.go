@@ -85,6 +85,7 @@ func serve() {
 			panic(err)
 		}
 		fmt.Printf("DEBUG -- jsonString %+v\n", string(jsonString))
+		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(jsonString))
 	}).Methods("GET")
 
