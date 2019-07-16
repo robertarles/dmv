@@ -24,31 +24,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var httpPort uint = 80
+var usingPort string
+
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "stand up a DMV http server",
 	Long:  `the DMV server allows registration and deletion of host info`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called")
+		serve()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serveCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	serveCmd.Flags().UintVarP(&httpPort, "port", "p", 80, "Listen on this HTTP Port")
 }
 
-func Serve() {
+func serve() {
 	type callerRecord struct {
 		hostname   string
 		remoteAddr string
@@ -95,7 +89,8 @@ func Serve() {
 
 	// fs := http.FileServer(http.Dir("static/"))
 	// http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	http.ListenAndServe(":80", r)
+	usingPort = fmt.Sprintf(":%d", httpPort)
+	fmt.Printf("starting server on port %s\n", usingPort)
+	http.ListenAndServe(usingPort, r)
 
 }
